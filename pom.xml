@@ -85,7 +85,7 @@
     <spark.scala-2.11.version>2.4.5</spark.scala-2.11.version>
     <spark.scala-2.12.version>2.4.5</spark.scala-2.12.version>
     <spark.version>${spark.scala-2.11.version}</spark.version>
-    <hive.version>3.0.0</hive.version>
+    <hive.version>4.0.1</hive.version>
     <commons-codec.version>1.9</commons-codec.version>
     <httpclient.version>4.5.13</httpclient.version>
     <httpcore.version>4.4.4</httpcore.version>
@@ -109,7 +109,7 @@
     <!-- profile controlled parameters, we are setting the defaults here so we can run "mvn package" with default profile values -->
     <!-- hadoop2 -->
     <hadoop.major-minor.version>2.7</hadoop.major-minor.version>
-    <hadoop.version>2.7.3</hadoop.version>
+    <hadoop.version>3.3.6</hadoop.version>
     <!-- scala2.11 -->
     <scala.binary.version>2.11</scala.binary.version>
     <scala.version>2.11.12</scala.version>
@@ -136,8 +136,8 @@
     <apacheds.version>2.0.0.AM26</apacheds.version>
     <ldap-api.version>2.1.2</ldap-api.version>
 
-    <curator.version>2.7.1</curator.version>
-    <zookeeper.version>3.4.6</zookeeper.version>
+    <curator.version>5.2.0</curator.version>
+    <zookeeper.version>3.8.4</zookeeper.version>
 
     <!--
       Properties for the copyright header style checks. Modules that use the ASF header
@@ -1274,6 +1274,13 @@
       </properties>
     </profile>
     <profile>
+      <id>hadoop3</id>
+      <properties>
+        <hadoop.major-minor.version>3</hadoop.major-minor.version>
+        <hadoop.version>3.3.6</hadoop.version>
+      </properties>
+    </profile>
+    <profile>
       <id>scala-2.11</id>
       <properties>
         <scala.binary.version>2.11</scala.binary.version>
@@ -1285,6 +1292,14 @@
       <properties>
         <scala.binary.version>2.12</scala.binary.version>
         <scala.version>2.12.15</scala.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>scala-2.13</id>
+      <properties>
+        <scala.binary.version>2.13</scala.binary.version>
+        <scala.version>2.13.8</scala.version>
+        <scalatra.version>2.7.1</scalatra.version>
       </properties>
     </profile>
 
@@ -1313,7 +1328,7 @@
     <profile>
       <id>spark3</id>
       <properties>
-        <spark.version>3.2.3</spark.version>
+        <spark.version>3.5.4</spark.version>
         <java.version>1.8</java.version>
         <py4j.version>0.10.9.7</py4j.version>
         <json4s.version>3.7.0-M11</json4s.version>
