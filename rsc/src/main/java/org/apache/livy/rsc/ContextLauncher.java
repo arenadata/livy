@@ -29,17 +29,13 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -159,6 +155,30 @@ class ContextLauncher {
     }
   }
 
+  private static void mergeJar(RSCConf conf, String key, String newJars, String sep) {
+    String existingJars = conf.get(key);
+    List<String> mergedList = new ArrayList<>();
+    Set<String> seenNames = new HashSet<>();
+    BiConsumer<String, String> addJars = (jarPaths, delimiter) -> {
+      if (jarPaths != null && !jarPaths.trim().isEmpty()) {
+        for (String path : jarPaths.split(delimiter)) {
+          String jar = path.trim();
+          if (!jar.isEmpty()) {
+            String fileName = new File(jar).getName();  // извлекаем имя файла
+            if (!seenNames.contains(fileName)) {
+              seenNames.add(fileName);
+              mergedList.add(jar);
+            }
+          }
+        }
+      }
+    };
+    addJars.accept(existingJars, sep);
+    addJars.accept(newJars, sep);
+    String mergedValue = String.join(sep, mergedList);
+    conf.set(key, mergedValue);
+  }
+
   private static ChildProcess startDriver(final RSCConf conf, Promise<?> promise)
       throws IOException {
     String livyJars = conf.get(LIVY_JARS);
@@ -192,7 +212,7 @@ class ContextLauncher {
       }
       livyJars = Utils.join(jars, ",");
     }
-    merge(conf, SPARK_JARS_KEY, livyJars, ",");
+    mergeJar(conf, SPARK_JARS_KEY, livyJars, ",");
 
     merge(conf, SPARK_ARCHIVES_KEY, conf.get(RSCConf.Entry.SPARKR_PACKAGE), ",");
     merge(conf, "spark.submit.pyFiles", conf.get(RSCConf.Entry.PYSPARK_ARCHIVES), ",");
