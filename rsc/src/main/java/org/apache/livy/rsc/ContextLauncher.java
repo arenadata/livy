@@ -164,7 +164,7 @@ class ContextLauncher {
         for (String path : jarPaths.split(delimiter)) {
           String jar = path.trim();
           if (!jar.isEmpty()) {
-            String fileName = new File(jar).getName();  // извлекаем имя файла
+            String fileName = new File(jar).getName();
             if (!seenNames.contains(fileName)) {
               seenNames.add(fileName);
               mergedList.add(jar);
