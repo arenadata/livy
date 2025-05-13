@@ -328,6 +328,27 @@ object InteractiveSession extends Logging {
       }
     }
 
+    def mergeJarConfList(jars: Seq[String], key: String): Unit = {
+      if (jars.nonEmpty) {
+        val uniqueNew = jars
+          .groupBy(path => new java.io.File(path).getName)
+          .map { case (_, sameNames) => sameNames.head }
+          .toSeq
+
+        builderProperties.get(key) match {
+          case None =>
+            builderProperties.put(key, uniqueNew.mkString(","))
+          case Some(oldValue) =>
+            val oldJars = oldValue.split(",").toSeq
+            val combined = (oldJars ++ uniqueNew)
+              .groupBy(path => new java.io.File(path).getName)
+              .map { case (_, sameNames) => sameNames.head }
+              .toSeq
+            builderProperties.put(key, combined.mkString(","))
+        }
+      }
+    }
+
     def mergeHiveSiteAndHiveDeps(sparkMajorVersion: Int): Unit = {
       val sparkFiles = conf.get("spark.files").map(_.split(",")).getOrElse(Array.empty[String])
       hiveSiteFile(sparkFiles, livyConf) match {
@@ -375,7 +396,7 @@ object InteractiveSession extends Logging {
       LivySparkUtils.formatSparkVersion(livyConf.get(LivyConf.LIVY_SPARK_VERSION))
     val scalaVersion = livyConf.get(LivyConf.LIVY_SPARK_SCALA_VERSION)
 
-    mergeConfList(livyJars(livyConf, scalaVersion), LivyConf.SPARK_JARS)
+    mergeJarConfList(livyJars(livyConf, scalaVersion), LivyConf.SPARK_JARS)
     val enableHiveContext = livyConf.getBoolean(LivyConf.ENABLE_HIVE_CONTEXT)
     // pass spark.livy.spark_major_version to driver
     builderProperties.put("spark.livy.spark_major_version", sparkMajorVersion.toString)
