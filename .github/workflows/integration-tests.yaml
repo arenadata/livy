@@ -56,13 +56,13 @@ jobs:
           file: dev/docker/livy-dev-base/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ toLower(github.repository_owner) }}/livy-ci:latest
+          tags: ghcr.io/${{ github.repository_owner }}/livy-ci:latest
 
   integration-tests:
     name: Integration tests
     needs: build-ci-image
     runs-on: ubuntu-22.04
-    container: ghcr.io/${{ toLower(github.repository_owner) }}/livy-ci:latest
+    container: ghcr.io/${{ github.repository_owner }}/livy-ci:latest
     strategy:
       matrix:
         maven_profile:
