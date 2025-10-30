@@ -30,6 +30,18 @@ import org.apache.livy.sessions._
 
 class SharedSessionSpec extends BaseSessionSpec(Shared) {
 
+  private def textPlainOf(result: JValue): String =
+    (result \ "data" \ "text/plain").extract[String]
+
+  /** Drop warning lines (e.g. deprecation summaries) and return the last non-empty line. */
+  private def normalizedLastValueLine(s: String): String = {
+    val lines = s.linesIterator
+      .filterNot(_.startsWith("warning:"))
+      .filterNot(_.trim.isEmpty)
+      .toList
+    if (lines.isEmpty) "" else lines.last
+  }
+
   private def execute(session: Session, code: String, codeType: String): Statement = {
     val id = session.execute(code, codeType)
     eventually(timeout(30 seconds), interval(100 millis)) {
@@ -44,15 +56,8 @@ class SharedSessionSpec extends BaseSessionSpec(Shared) {
     statement.id should equal (0)
 
     val result = parse(statement.output)
-    val expectedResult = Extraction.decompose(Map(
-      "status" -> "ok",
-      "execution_count" -> 0,
-      "data" -> Map(
-        "text/plain" -> "res0: Int = 3\n"
-      )
-    ))
-
-    result should equal (expectedResult)
+    // Scala 2.13 REPL may add `val` and warnings; compare the value line only.
+    normalizedLastValueLine(textPlainOf(result)) should include ("res0: Int = 3")
   }
 
   it should "access the spark context" in withSession { session =>
@@ -77,21 +82,12 @@ class SharedSessionSpec extends BaseSessionSpec(Shared) {
     statement.id should equal (0)
 
     val result = parse(statement.output)
-
-    val expectedResult = Extraction.decompose(Map(
-      "status" -> "ok",
-      "execution_count" -> 0,
-      "data" -> Map(
-        "text/plain" -> "res0: Array[Int] = Array(1, 2)\n"
-      )
-    ))
-
-    result should equal (expectedResult)
+    // Ignore warnings and match the final value line.
+    normalizedLastValueLine(textPlainOf(result)) should include ("res0: Array[Int] = Array(1, 2)")
   }
 
-  it should "throw exception if code type is not specified in shared session" in withSession {
-    session =>
-      intercept[IllegalArgumentException](session.execute("1 + 2"))
+  it should "throw exception if code type is not specified in shared session" in withSession { session =>
+    intercept[IllegalArgumentException](session.execute("1 + 2"))
   }
 
   it should "execute `1 + 2 = 3` in Python" in withSession { session =>

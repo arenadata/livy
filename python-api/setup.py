@@ -29,13 +29,13 @@ CLASSIFIERS = [
 
 requirements = [
     'cloudpickle>=0.2.1',
-    'configparser>=3.5.0',
     'future>=0.15.2',
-    'futures>=3.0.5',
-    'mock~=3.0.5',
     'requests>=2.10.0',
     'responses>=0.5.1',
     'requests-kerberos>=0.11.0',
+    'configparser>=3.5.0; python_version < "3.0"',
+    'futures>=3.0.5; python_version < "3.2"',
+    'mock~=3.0.5; python_version < "3.3"',
 ]
 
 setup(

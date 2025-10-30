@@ -378,9 +378,13 @@ class HttpClient(object):
 
     def _load_config_from_file(self, config_dir, config_file):
         path = os.path.join(config_dir, config_file)
-        data = "[" + self._CONFIG_SECTION + "]\n" + \
-            open(path, encoding='utf-8').read()
-        self._config.readfp(StringIO(data))
+        with open(path, encoding='utf-8') as fh:
+            data = "[" + self._CONFIG_SECTION + "]\n" + fh.read()
+        buf = StringIO(data)
+        if hasattr(self._config, "read_file"):
+            self._config.read_file(buf)
+        else:  # pragma: no cover
+            self._config.readfp(buf)
 
     def _create_new_session(self, session_conf_dict):
         data = {'kind': 'pyspark', 'conf': session_conf_dict}

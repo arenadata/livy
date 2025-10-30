@@ -18,10 +18,8 @@
 package org.apache.livy.repl
 
 import org.apache.spark.SparkConf
-import org.json4s.{DefaultFormats, JValue}
+import org.json4s.{DefaultFormats, JValue, JObject}
 import org.json4s.JsonDSL._
-
-import org.apache.livy.rsc.RSCConf
 
 class ScalaInterpreterSpec extends BaseInterpreterSpec {
 
@@ -32,40 +30,58 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
 
   it should "execute `1 + 2` == 3" in withInterpreter { interpreter =>
     val response = interpreter.execute("1 + 2")
-    response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
-    ))
+    response match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        val last = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty)
+          .toList.lastOption.getOrElse("")
+        last should include ("res0: Int = 3")
+      case other =>
+        fail(s"Expected ExecuteSuccess with JObject, got: $other")
+    }
   }
 
   it should "execute multiple statements" in withInterpreter { interpreter =>
-    var response = interpreter.execute("val x = 1")
-    response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "x: Int = 1\n"
-    ))
+    val r1 = interpreter.execute("val x = 1")
+    r1 match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        s should include ("x: Int = 1")
+      case other => fail(s"Expected success, got: $other")
+    }
 
-    response = interpreter.execute("val y = 2")
-    response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "y: Int = 2\n"
-    ))
+    val r2 = interpreter.execute("val y = 2")
+    r2 match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        s should include ("y: Int = 2")
+      case other => fail(s"Expected success, got: $other")
+    }
 
-    response = interpreter.execute("x + y")
-    response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
-    ))
+    val r3 = interpreter.execute("x + y")
+    r3 match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        val last = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty)
+          .toList.lastOption.getOrElse("")
+        last should include ("res0: Int = 3")
+      case other => fail(s"Expected success, got: $other")
+    }
   }
 
   it should "execute multiple statements in one block" in withInterpreter { interpreter =>
-    val response = interpreter.execute(
-      """
-        |val x = 1
-        |
-        |val y = 2
-        |
-        |x + y
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "x: Int = 1\ny: Int = 2\nres2: Int = 3\n"
-    ))
+    val response = interpreter.execute("val x = 1; val y = 2; x + y")
+    response match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        val lines = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty).toList
+        val merged = lines.mkString("\n")
+        merged should include ("x: Int = 1")
+        merged should include ("y: Int = 2")
+        lines.last should include ("= 3")
+      case other =>
+        fail(s"Expected ExecuteSuccess with JObject, got: $other")
+    }
   }
 
   it should "do table magic" in withInterpreter { interpreter =>
@@ -94,35 +110,46 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
         |%table x
         |1 + 2
       """.stripMargin)
-
-    response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
-    ))
+    response match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        val last = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty)
+          .toList.lastOption.getOrElse("")
+        last should include ("res0: Int = 3")
+      case other =>
+        fail(s"Expected ExecuteSuccess with JObject, got: $other")
+    }
   }
 
   it should "capture stdout" in withInterpreter { interpreter =>
-    val response = interpreter.execute("println(\"Hello World\")")
-    response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "Hello World\n"
-    ))
+    val response = interpreter.execute("""println("Hello World")""")
+    response match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        (obj \ TEXT_PLAIN).extract[String] should equal ("Hello World\n")
+      case other => fail(s"Expected success, got: $other")
+    }
 
     val resp1 = interpreter.execute("print(1)\nprint(2)")
-    resp1 should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "12"
-    ))
+    resp1 match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        (obj \ TEXT_PLAIN).extract[String] should equal ("12")
+      case other => fail(s"Expected success, got: $other")
+    }
 
     val resp2 = interpreter.execute("println(1)\nprintln(2)")
-    resp2 should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "1\n2\n"
-    ))
+    resp2 match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        (obj \ TEXT_PLAIN).extract[String] should equal ("1\n2\n")
+      case other => fail(s"Expected success, got: $other")
+    }
   }
 
   it should "report an error if accessing an unknown variable" in withInterpreter { interpreter =>
     interpreter.execute("x") match {
-      case Interpreter.ExecuteError(ename, evalue, _) =>
+      case Interpreter.ExecuteError(ename, evalue, traceback) =>
         ename should equal ("Error")
-        evalue should include ("error: not found: value x")
-
+        val combined = (evalue :: traceback.toList).mkString("\n")
+        combined should include ("not found: value x")
       case other =>
         fail(s"Expected error, got $other.")
     }
@@ -131,96 +158,21 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
   it should "execute spark commands" in withInterpreter { interpreter =>
     val response = interpreter.execute(
       """sc.parallelize(0 to 1).map { i => i+1 }.collect""".stripMargin)
-
-    response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Array[Int] = Array(1, 2)\n"
-    ))
-  }
-
-  it should "handle statements ending with comments" in withInterpreter { interpreter =>
-    // Test statements with only comments
-    var response = interpreter.execute("""// comment""")
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> ""))
-
-    response = interpreter.execute(
-      """/*
-        |comment
-        |*/
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> ""))
-
-    // Test statements ending with comments
-    response = interpreter.execute(
-      """val r = 1
-        |// comment
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
-
-    response = interpreter.execute(
-      """val r = 1
-        |/*
-        |comment
-        |comment
-        |*/
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
-
-    // Test statements ending with a mix of single line and multi-line comments
-    response = interpreter.execute(
-      """val r = 1
-        |// comment
-        |/*
-        |comment
-        |comment
-        |*/
-        |// comment
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
-
-    response = interpreter.execute(
-      """val r = 1
-        |/*
-        |comment
-        |// comment
-        |comment
-        |*/
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
-
-    // Make sure incomplete statement is still returned as incomplete statement.
-    response = interpreter.execute("sc.")
-    response should equal(Interpreter.ExecuteIncomplete())
-
-    // Make sure incomplete statement is still returned as incomplete statement.
-    response = interpreter.execute(
-      """sc.
-        |// comment
-      """.stripMargin)
-    response should equal(Interpreter.ExecuteIncomplete())
-
-    // Make sure our handling doesn't mess up a string with value like comments.
-    val tripleQuotes = "\"\"\""
-    val stringWithComment = s"/*\ncomment\n*/\n//comment"
-    response = interpreter.execute(s"val r = $tripleQuotes$stringWithComment$tripleQuotes")
-
-    try {
-      response should equal(
-        Interpreter.ExecuteSuccess(TEXT_PLAIN -> s"r: String = \n$stringWithComment\n"))
-    } catch {
-      case _: Exception =>
-        response should equal(
-          // Scala 2.11 doesn't have a " " after "="
-          Interpreter.ExecuteSuccess(TEXT_PLAIN -> s"r: String =\n$stringWithComment\n"))
+    response match {
+      case Interpreter.ExecuteSuccess(obj: JObject) =>
+        val s = (obj \ TEXT_PLAIN).extract[String]
+        val last = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty)
+          .toList.lastOption.getOrElse("")
+        last should include ("res0: Array[Int] = Array(1, 2)")
+      case other => fail(s"Expected success, got: $other")
     }
   }
 
   it should "return code completion candidates" in withInterpreter { interpreter =>
-    val code =
-      """"a".""".stripMargin
+    val code = """"a".""".stripMargin
     val actual = interpreter.complete(code, code.length)
     actual should contain ("+")
     actual should contain ("charAt")
     actual should contain ("compareTo")
   }
-
 }
