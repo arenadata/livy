@@ -86,7 +86,8 @@ class SharedSessionSpec extends BaseSessionSpec(Shared) {
     normalizedLastValueLine(textPlainOf(result)) should include ("res0: Array[Int] = Array(1, 2)")
   }
 
-  it should "throw exception if code type is not specified in shared session" in withSession { session =>
+  it should "throw exception if code type is not specified in shared session" in withSession {
+    session =>
     intercept[IllegalArgumentException](session.execute("1 + 2"))
   }
 

@@ -49,7 +49,8 @@ abstract class PythonBaseInterpreterSpec extends BaseInterpreterSpec {
       withClue(s"Unexpected error message for $ename: '$msg'") {
         msgOk(msg) shouldBe true
       }
-      withClue(s"Traceback does not contain required fragments: ${mustContainInTraceback.mkString(", ")}") {
+      withClue(s"Traceback does not contain required fragments: " +
+        s"${mustContainInTraceback.mkString(", ")}") {
         tracebackContainsAll(tb.toList, mustContainInTraceback) shouldBe true
       }
     case other =>

@@ -19,9 +19,11 @@ package org.apache.livy.repl
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+
 import org.json4s.{Extraction, JValue}
 import org.json4s.jackson.JsonMethods.parse
 import org.scalatest.concurrent.Eventually._
+
 import org.apache.livy.rsc.driver.StatementState
 import org.apache.livy.sessions._
 
@@ -38,9 +40,11 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
     if (lines.isEmpty) "" else lines.last
   }
 
-  private def containsSubstringInErrorOrTrace(resultMap: Map[String, JValue], needle: String): Boolean = {
+  private def containsSubstringInErrorOrTrace(resultMap: Map[String, JValue],
+                                              needle: String): Boolean = {
     val evalue = resultMap.get("evalue").map(_.extract[String]).getOrElse("")
-    val traceback = resultMap.get("traceback").map(_.extract[Seq[String]].mkString("\n")).getOrElse("")
+    val traceback = resultMap.get("traceback").map(_.extract[Seq[String]]
+      .mkString("\n")).getOrElse("")
     evalue.contains(needle) || traceback.contains(needle)
   }
 

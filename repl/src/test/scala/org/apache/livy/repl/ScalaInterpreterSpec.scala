@@ -18,7 +18,7 @@
 package org.apache.livy.repl
 
 import org.apache.spark.SparkConf
-import org.json4s.{DefaultFormats, JValue, JObject}
+import org.json4s.{DefaultFormats, JObject, JValue}
 import org.json4s.JsonDSL._
 
 class ScalaInterpreterSpec extends BaseInterpreterSpec {
@@ -74,7 +74,8 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
     response match {
       case Interpreter.ExecuteSuccess(obj: JObject) =>
         val s = (obj \ TEXT_PLAIN).extract[String]
-        val lines = s.linesIterator.filterNot(_.startsWith("warning:")).filter(_.trim.nonEmpty).toList
+        val lines = s.linesIterator.filterNot(_.startsWith("warning:"))
+          .filter(_.trim.nonEmpty).toList
         val merged = lines.mkString("\n")
         merged should include ("x: Int = 1")
         merged should include ("y: Int = 2")
