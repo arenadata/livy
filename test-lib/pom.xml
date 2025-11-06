@@ -18,12 +18,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.apache.livy</groupId>
+    <groupId>io.arenadata.livy</groupId>
     <artifactId>livy-main</artifactId>
     <version>0.8.0.1-4.2.0-0-dev1</version>
   </parent>
 
-  <groupId>org.apache.livy</groupId>
+  
   <artifactId>livy-test-lib</artifactId>
   <version>0.8.0.1-4.2.0-0-dev1</version>
   <packaging>jar</packaging>
@@ -34,7 +34,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.livy</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>livy-api</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>

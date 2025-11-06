@@ -15,12 +15,10 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.livy</groupId>
+  <groupId>io.arenadata.livy</groupId>
   <artifactId>livy-main</artifactId>
   <version>0.8.0.1-4.2.0-0-dev1</version>
   <packaging>pom</packaging>
@@ -1073,9 +1071,9 @@
             </goals>
             <configuration>
               <target>
-                <delete file="${project.build.directory}/unit-tests.log" quiet="true" />
-                <delete dir="${project.build.directory}/jacoco" quiet="true" />
-                <delete dir="${project.build.directory}/tmp" quiet="true" />
+                <delete file="${project.build.directory}/unit-tests.log" quiet="true"/>
+                <delete dir="${project.build.directory}/jacoco" quiet="true"/>
+                <delete dir="${project.build.directory}/tmp" quiet="true"/>
               </target>
             </configuration>
           </execution>
@@ -1088,7 +1086,7 @@
             </goals>
             <configuration>
               <target>
-                <mkdir dir="${project.build.directory}/tmp" />
+                <mkdir dir="${project.build.directory}/tmp"/>
               </target>
             </configuration>
           </execution>
@@ -1105,18 +1103,11 @@
             <configuration>
               <target>
                 <echo message="execRoot: ${execution.root}, buildDir: ${project.build.directory}"/>
-                <copy file="${execution.root}/scalastyle.xml"
-                  tofile="${project.build.directory}/scalastyle.xml" />
-                <replace file="${project.build.directory}/scalastyle.xml"
-                  token="{{COPYRIGHT_HEADER}}"
-                  value="${copyright.header}" />
-                <copy file="${execution.root}/checkstyle.xml"
-                  tofile="${project.build.directory}/checkstyle.xml" />
-                <echo file="${project.build.directory}/checkstyle.header"
-                  message="${copyright.header}" />
-                <replace file="${project.build.directory}/checkstyle.xml"
-                  token="{{HEADER_FILE}}"
-                  value="${project.build.directory}/checkstyle.header" />
+                <copy file="${execution.root}/scalastyle.xml" tofile="${project.build.directory}/scalastyle.xml"/>
+                <replace file="${project.build.directory}/scalastyle.xml" token="{{COPYRIGHT_HEADER}}" value="${copyright.header}"/>
+                <copy file="${execution.root}/checkstyle.xml" tofile="${project.build.directory}/checkstyle.xml"/>
+                <echo file="${project.build.directory}/checkstyle.header" message="${copyright.header}"/>
+                <replace file="${project.build.directory}/checkstyle.xml" token="{{HEADER_FILE}}" value="${project.build.directory}/checkstyle.header"/>
               </target>
             </configuration>
           </execution>
