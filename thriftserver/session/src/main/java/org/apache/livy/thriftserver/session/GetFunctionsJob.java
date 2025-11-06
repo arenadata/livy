@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import scala.Tuple2;
-import static scala.collection.JavaConversions.seqAsJavaList;
+import scala.jdk.javaapi.CollectionConverters;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.catalyst.FunctionIdentifier;
@@ -51,10 +51,10 @@ public class GetFunctionsJob extends SparkCatalogJob {
   protected List<Row> fetchCatalogObjects(SessionCatalog catalog) {
     List<Row> funcList = new ArrayList<>();
 
-    List<String> databases = seqAsJavaList(catalog.listDatabases(databasePattern));
+    List<String> databases = CollectionConverters.asJava(catalog.listDatabases(databasePattern));
     for (String db : databases) {
       List<Tuple2<FunctionIdentifier, String>> identifiersTypes =
-        seqAsJavaList(catalog.listFunctions(db, functionRegex));
+              CollectionConverters.asJava(catalog.listFunctions(db, functionRegex));
       for (Tuple2<FunctionIdentifier, String> identifierType : identifiersTypes) {
         FunctionIdentifier function = identifierType._1;
         ExpressionInfo info = catalog.lookupFunctionInfo(function);

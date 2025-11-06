@@ -84,7 +84,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          mvn -Pthriftserver ${{ matrix.maven_profile }} -DskipITs -Dmaven.javadoc.skip=true -B -V -e verify
+          mvn ${{ matrix.maven_profile }} -DskipITs -Dmaven.javadoc.skip=true -B -V -e verify
 
       - name: Upload coverage to codecov
         uses: codecov/codecov-action@v4

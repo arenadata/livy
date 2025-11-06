@@ -17,6 +17,7 @@
 name: Integration Tests
 
 on:
+  push:
   pull_request:
     types: [opened, reopened, synchronize]
 
@@ -83,7 +84,7 @@ jobs:
 
       - name: Build with Maven (skip unit tests)
         run: |
-          mvn -Pthriftserver ${{ matrix.maven_profile }} -DskipTests -Dmaven.javadoc.skip=true -B -V -e verify
+          mvn ${{ matrix.maven_profile }} -DskipTests -Dmaven.javadoc.skip=true -B -V -e verify
 
       - name: Upload coverage to codecov
         uses: codecov/codecov-action@v4
