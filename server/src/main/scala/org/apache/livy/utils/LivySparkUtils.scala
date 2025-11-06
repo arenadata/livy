@@ -37,7 +37,8 @@ object LivySparkUtils extends Logging {
     // Spark 2.3 + Scala 2.11
     (2, 3) -> "2.11",
     // Spark 2.2 + Scala 2.11
-    (2, 2) -> "2.11"
+    (2, 2) -> "2.11",
+    (3, 4) -> "2.13"
   )
 
   // Supported Spark version

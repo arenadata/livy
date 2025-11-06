@@ -18,12 +18,18 @@ import os
 import base64
 import json
 import time
-from urlparse import urlparse
 import requests
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
 import cloudpickle
 import pytest
-import httplib
+try:
+    import http.client as httplib
+except ImportError:
+    import httplib
 from flaky import flaky
 
 global session_id, job_id
@@ -143,8 +149,7 @@ def test_error_job():
     def error_job(context):
         return "hello" + 1
 
-    process_job(error_job,
-        "TypeError: cannot concatenate 'str' and 'int' objects", True)
+    process_job(error_job, "TypeError", True)
 
 
 def test_reconnect():

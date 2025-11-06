@@ -127,7 +127,51 @@ object MiniYarnMain extends MiniClusterBase {
 }
 
 object MiniLivyMain extends MiniClusterBase {
+
+  private def listJars(dir: java.io.File): Seq[String] =
+    Option(dir.listFiles()).getOrElse(Array.empty)
+      .filter(f => f.isFile && f.getName.endsWith(".jar"))
+      .map(_.getAbsolutePath)
+      .toSeq
+
+  private def collectReplAndRscJars(livyHome: String): (Seq[String], Seq[String]) = {
+    val replTarget = new java.io.File(s"$livyHome/repl/scala-2.13/target")
+    val replTargetJars = new java.io.File(replTarget, "jars")
+
+    val replMain = listJars(replTargetJars)
+      .filter(_.matches(".*/repl/scala-2\\.13/target/jars/livy-repl_2\\.13-.*\\.jar$"))
+
+    val replDeps = listJars(replTargetJars)
+
+    val rscTarget = new java.io.File(s"$livyHome/rsc/target")
+    val rscTargetJars = new java.io.File(rscTarget, "jars")
+    val rscMain = listJars(rscTarget)
+      .filter(_.matches(".*/rsc/target/livy-rsc-.*\\.jar$"))
+    val rscDeps = listJars(rscTargetJars)
+
+    val replAll = (replMain ++ replDeps).distinct
+    val rscAll = (rscMain  ++ rscDeps ).distinct
+
+    (replAll, rscAll)
+  }
+
+
   protected def baseLivyConf(configPath: String): Map[String, String] = {
+    val livyHome = sys.env.getOrElse("LIVY_HOME", new java.io.File(".").getAbsolutePath)
+    val (replJarsSeq, rscJarsSeq) = collectReplAndRscJars(livyHome)
+
+    info(s"REPL jars count = ${replJarsSeq.size}")
+    info(s"RSC  jars count = ${rscJarsSeq.size}")
+    info(s"Sample REPL jar: ${replJarsSeq.headOption.getOrElse("<none>")}")
+    info(s"Sample RSC  jar: ${rscJarsSeq.headOption .getOrElse("<none>")}")
+
+    require(replJarsSeq.exists(_.contains("livy-repl_2.13-")), "REPL main jar not found!")
+    require(rscJarsSeq.exists(_.contains("livy-rsc-")), "RSC main jar not found!")
+
+    val replCsv = replJarsSeq.mkString(",")
+    val rscCsv = rscJarsSeq .mkString(",")
+    val allCsv = s"$replCsv,$rscCsv"
+
     val baseConf = Map(
       LivyConf.LIVY_SPARK_MASTER.key -> "yarn",
       LivyConf.LIVY_SPARK_DEPLOY_MODE.key -> "cluster",
@@ -135,7 +179,9 @@ object MiniLivyMain extends MiniClusterBase {
       LivyConf.YARN_POLL_INTERVAL.key -> "500ms",
       LivyConf.RECOVERY_MODE.key -> "recovery",
       LivyConf.RECOVERY_STATE_STORE.key -> "filesystem",
-      LivyConf.RECOVERY_STATE_STORE_URL.key -> s"file://$configPath/state-store")
+      LivyConf.RECOVERY_STATE_STORE_URL.key -> s"file://$configPath/state-store",
+      LivyConf.REPL_JARS.key -> allCsv,
+      LivyConf.RSC_JARS.key -> allCsv)
     val thriftEnabled = sys.env.get("LIVY_TEST_THRIFT_ENABLED")
     if (thriftEnabled.nonEmpty && thriftEnabled.forall(_.toBoolean)) {
       baseConf + (LivyConf.THRIFT_SERVER_ENABLED.key -> "true")
