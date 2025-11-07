@@ -19,23 +19,21 @@ package org.apache.livy.repl
 
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicInteger
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
 import org.apache.spark.SparkConf
 import org.json4s._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually._
-
 import org.apache.livy.LivyBaseUnitTestSuite
 import org.apache.livy.rsc.RSCConf
 import org.apache.livy.rsc.driver.{Statement, StatementState}
 import org.apache.livy.sessions._
 
 abstract class BaseSessionSpec(kind: Kind)
-    extends FlatSpec with Matchers with LivyBaseUnitTestSuite {
+    extends AnyFlatSpec with Matchers with LivyBaseUnitTestSuite {
 
   implicit val formats = DefaultFormats
 

@@ -190,7 +190,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.apache.livy</groupId>
+                  <groupId>${project.groupId}</groupId>
                   <artifactId>livy-rsc</artifactId>
                   <version>${project.version}</version>
                   <type>jar</type>

@@ -290,6 +290,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.scalatestplus</groupId>
+      <artifactId>mockito-4-11_2.13</artifactId>
+      <version>3.2.18.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-core</artifactId>
       <version>${apacheds.version}</version>

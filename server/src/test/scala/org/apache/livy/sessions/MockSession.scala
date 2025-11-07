@@ -15,24 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.livy.repl
+package org.apache.livy.sessions
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
+import org.apache.livy.LivyConf
 
-import org.apache.livy.LivyBaseUnitTestSuite
+class MockSession(id: Int, owner: String, conf: LivyConf, name: Option[String] = None,
+                  ttl: Option[String] = None)
+  extends Session(id, name, owner, ttl, conf) {
+  case class RecoveryMetadata(id: Int) extends Session.RecoveryMetadata()
 
-abstract class BaseInterpreterSpec extends AnyFlatSpec with Matchers with LivyBaseUnitTestSuite {
+  override val proxyUser = None
 
-  def createInterpreter(): Interpreter
+  override def start(): Unit = ()
 
-  def withInterpreter(testCode: Interpreter => Any): Unit = {
-    val interpreter = createInterpreter()
-    try {
-      interpreter.start()
-      testCode(interpreter)
-    } finally {
-      interpreter.close()
-    }
+  var stopped = false
+  override protected def stopSession(): Unit = {
+    stopped = true
   }
+
+  override def logLines(): IndexedSeq[String] = IndexedSeq()
+
+  var serverState: SessionState = SessionState.Idle
+  override def state: SessionState = serverState
+
+  override def recoveryMetadata: RecoveryMetadata = RecoveryMetadata(0)
 }

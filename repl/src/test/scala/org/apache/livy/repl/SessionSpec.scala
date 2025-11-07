@@ -19,19 +19,18 @@ package org.apache.livy.repl
 
 import java.util.Properties
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch, TimeUnit}
-
 import org.apache.spark.SparkConf
-import org.scalatest.{BeforeAndAfter, FunSpec}
-import org.scalatest.Matchers._
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time._
-
 import org.apache.livy.LivyBaseUnitTestSuite
 import org.apache.livy.repl.Interpreter.ExecuteResponse
 import org.apache.livy.rsc.RSCConf
 import org.apache.livy.sessions._
 
-class SessionSpec extends FunSpec with Eventually with LivyBaseUnitTestSuite with BeforeAndAfter {
+class SessionSpec extends AnyFunSpec with Eventually with LivyBaseUnitTestSuite with BeforeAndAfter with Matchers {
   override implicit val patienceConfig =
     PatienceConfig(timeout = scaled(Span(30, Seconds)), interval = scaled(Span(100, Millis)))
 

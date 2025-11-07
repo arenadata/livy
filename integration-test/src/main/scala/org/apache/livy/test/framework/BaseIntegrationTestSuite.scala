@@ -21,12 +21,10 @@ import java.io.File
 import java.security.Principal
 import java.security.PrivilegedExceptionAction
 import java.util.UUID
-
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.control.NonFatal
-
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -39,8 +37,10 @@ import org.apache.http.impl.auth.BasicSchemeFactory
 import org.apache.http.impl.auth.SPNegoSchemeFactory
 import org.apache.http.impl.client.DefaultHttpClient
 import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-abstract class BaseIntegrationTestSuite extends FunSuite with Matchers with BeforeAndAfterAll {
+abstract class BaseIntegrationTestSuite extends AnyFunSuite with Matchers with BeforeAndAfterAll {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   var cluster: Cluster = _
