@@ -2,14 +2,16 @@ name: CI (Unit + Integration)
 
 on:
   push:
-  pull_request:
-
 env:
   MAVEN_OPTS: >-
     -Dhttp.keepAlive=false
     -Dmaven.wagon.http.pool=false
     -Dmaven.wagon.http.retryHandler.class=standard
     -Dmaven.wagon.http.retryHandler.count=3
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
