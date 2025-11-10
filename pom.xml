@@ -135,7 +135,7 @@
     <ldap-api.version>2.1.2</ldap-api.version>
 
     <curator.version>5.2.0</curator.version>
-      <zookeeper.version>3.8.4</zookeeper.version>
+      <zookeeper.version>3.8.4.1-4.2.0-0-dev1</zookeeper.version>
 
     <!--
       Properties for the copyright header style checks. Modules that use the ASF header
