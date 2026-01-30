@@ -26,27 +26,32 @@ RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
  && dpkg-reconfigure -f noninteractive tzdata \
  && rm -rf /var/lib/apt/lists/*
 
-# locale
-RUN apt-get update -qq && apt-get install -qq --yes --no-install-recommends locales \
+RUN apt-get update -qq \
+ && apt-get install -qq --yes --no-install-recommends locales \
  && locale-gen en_US.UTF-8
 ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 
-RUN apt-get install -qq --yes --no-install-recommends \
+RUN apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
     ca-certificates \
     curl \
     git \
     gnupg \
-    libkrb5-dev \
     lsof \
     maven \
-    openjdk-8-jdk \
+    openjdk-17-jdk \
     python3-dev \
     python3-pip \
+    python-is-python3 \
+    libkrb5-dev \
     software-properties-common \
     telnet \
     vim \
     wget \
-    python-is-python3
+ && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+RUN update-alternatives --set java  ${JAVA_HOME}/bin/java  && \
+    update-alternatives --set javac ${JAVA_HOME}/bin/javac
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
       ca-certificates gnupg curl \
@@ -65,7 +70,8 @@ RUN apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
     pkg-config \
     libkrb5-dev \
     python3-dev \
-    python3-pip
+    python3-pip \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m pip install -U pip \
  && python3 -m pip install \
