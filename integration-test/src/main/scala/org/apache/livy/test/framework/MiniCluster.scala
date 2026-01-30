@@ -271,6 +271,26 @@ class MiniCluster(config: Map[String, String]) extends Cluster with MiniClusterU
       .map(_.split("\\s+").toSeq).getOrElse(Nil)
   }
 
+  // Java 17+ module options required for Spark
+  private val java17ModuleOptions: String = Seq(
+    "-XX:+IgnoreUnrecognizedVMOptions",
+    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    "--add-opens=java.base/java.io=ALL-UNNAMED",
+    "--add-opens=java.base/java.net=ALL-UNNAMED",
+    "--add-opens=java.base/java.nio=ALL-UNNAMED",
+    "--add-opens=java.base/java.util=ALL-UNNAMED",
+    "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
+    "--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED",
+    "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+    "--add-opens=java.base/sun.nio.cs=ALL-UNNAMED",
+    "--add-opens=java.base/sun.security.action=ALL-UNNAMED",
+    "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
+    "-Djdk.reflect.useDirectMethodHandle=false"
+  ).mkString(" ")
+
   override def deploy(): Unit = {
     if (_tempDir.exists()) {
       FileUtils.deleteQuietly(_tempDir)
@@ -284,8 +304,10 @@ class MiniCluster(config: Map[String, String]) extends Cluster with MiniClusterU
       "spark.ui.enabled" -> "false",
       SparkLauncher.DRIVER_MEMORY -> "512m",
       SparkLauncher.EXECUTOR_MEMORY -> "512m",
-      SparkLauncher.DRIVER_EXTRA_JAVA_OPTIONS -> "-Dtest.appender=console",
-      SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS -> "-Dtest.appender=console"
+      SparkLauncher.DRIVER_EXTRA_JAVA_OPTIONS ->
+        s"-Dtest.appender=console $java17ModuleOptions",
+      SparkLauncher.EXECUTOR_EXTRA_JAVA_OPTIONS ->
+        s"-Dtest.appender=console $java17ModuleOptions"
     )
     saveProperties(sparkConf, new File(_sparkConfigDir, "spark-defaults.conf"))
 
