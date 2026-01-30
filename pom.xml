@@ -20,7 +20,7 @@
 
   <groupId>io.arenadata.livy</groupId>
   <artifactId>livy-main</artifactId>
-  <version>0.8.0.1-4.2.0-0-dev1</version>
+  <version>0.8.0.2-4.2.0-0</version>
   <packaging>pom</packaging>
   <name>Livy Project Parent POM</name>
   <description>Livy Project</description>
@@ -100,7 +100,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <scalatest.version>3.2.19</scalatest.version>
     <scalatra.version>2.6.5</scalatra.version>
-    <java.version>1.8</java.version>
+    <java.version>17</java.version>
     <extraJavaTestArgs>
       -XX:+IgnoreUnrecognizedVMOptions
       --add-opens=java.base/java.lang.invoke=ALL-UNNAMED
@@ -128,7 +128,7 @@
     <scala.version>2.11.12</scala.version>
     <!-- spark2 -->
     <spark.version>2.4.5</spark.version>
-    <java.version>1.8</java.version>
+    <java.version>17</java.version>
     <py4j.version>0.10.9</py4j.version>
     <json4s.version>3.5.3</json4s.version>
     <spark.bin.name>spark-${spark.version}-bin-hadoop${hadoop.major-minor.version}</spark.bin.name>
@@ -1350,7 +1350,7 @@
       <id>spark3</id>
       <properties>
         <spark.version>3.5.4</spark.version>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <py4j.version>0.10.9.7</py4j.version>
         <json4s.version>3.7.0-M11</json4s.version>
         <netty.version>4.1.92.Final</netty.version>

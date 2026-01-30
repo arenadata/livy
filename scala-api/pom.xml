@@ -21,12 +21,12 @@
   <parent>
     <groupId>io.arenadata.livy</groupId>
     <artifactId>multi-scala-project-root</artifactId>
-    <version>0.8.0.1-4.2.0-0-dev1</version>
+    <version>0.8.0.2-4.2.0-0</version>
     <relativePath>../scala/pom.xml</relativePath>
   </parent>
 
   <artifactId>livy-scala-api-parent</artifactId>
-  <version>0.8.0.1-4.2.0-0-dev1</version>
+  <version>0.8.0.2-4.2.0-0</version>
   <packaging>pom</packaging>
 
   <dependencies>

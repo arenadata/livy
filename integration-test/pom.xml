@@ -21,11 +21,11 @@
     <groupId>io.arenadata.livy</groupId>
     <artifactId>livy-main</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>0.8.0.1-4.2.0-0-dev1</version>
+    <version>0.8.0.2-4.2.0-0</version>
   </parent>
 
   <artifactId>livy-integration-test</artifactId>
-  <version>0.8.0.1-4.2.0-0-dev1</version>
+  <version>0.8.0.2-4.2.0-0</version>
   <packaging>jar</packaging>
 
   <properties>
