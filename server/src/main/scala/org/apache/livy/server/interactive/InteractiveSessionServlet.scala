@@ -118,7 +118,7 @@ class InteractiveSessionServlet(
 
     new SessionInfo(session.id, session.name.orNull, session.appId.orNull,
       session.owner, session.state.toString, session.kind.toString,
-      session.appInfo.asJavaMap, logs.asJava, session.ttl.orNull,
+      session.appInfo.asJavaMap, logs.toList.asJava, session.ttl.orNull,
       session.idleTimeout.orNull, session.driverMemory.orNull,
       session.driverCores.getOrElse(0), session.executorMemory.orNull,
       session.executorCores.getOrElse(0), conf, archives,

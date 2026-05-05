@@ -55,7 +55,7 @@ object LivySparkUtils extends Logging {
   private val MAX_VERSION = (3, 6)
 
   private val sparkVersionRegex = """version (.*)""".r.unanchored
-  private val scalaVersionRegex = """Scala version (.*), Java""".r.unanchored
+  private val scalaVersionRegex = """Scala version (\d+\.\d+(?:\.\d+)?)""".r.unanchored
 
   /**
    * Test that Spark home is configured and configured Spark home is a directory.

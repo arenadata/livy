@@ -40,13 +40,16 @@ class SQLInterpreterSpec extends BaseInterpreterSpec {
 
   override def createInterpreter(): Interpreter = {
     val conf = new SparkConf()
+      .setMaster("local[*]")
+      .setAppName("test")
+
     if (sparkEntries == null) {
       sparkEntries = new SparkEntries(conf)
     }
     new SQLInterpreter(conf, new RSCConf(), sparkEntries)
   }
 
-  it should "handle java.sql.Date tpye" in withInterpreter { interpreter =>
+  it should "handle java.sql.Date type" in withInterpreter { interpreter =>
     val personList = Seq(Person("Jerry", Date.valueOf("2019-07-24")),
       Person("Michael", Date.valueOf("2019-07-23")))
 

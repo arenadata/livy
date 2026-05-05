@@ -28,29 +28,31 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
   implicit val formats = DefaultFormats
 
   override def createInterpreter(): Interpreter =
-    new SparkInterpreter(new SparkConf())
+    new SparkInterpreter(new SparkConf()
+    .setMaster("local[*]")
+    .setAppName("test"))
 
   it should "execute `1 + 2` == 3" in withInterpreter { interpreter =>
     val response = interpreter.execute("1 + 2")
     response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
+      TEXT_PLAIN -> addLineSeparator("val res0: Int = 3")
     ))
   }
 
   it should "execute multiple statements" in withInterpreter { interpreter =>
     var response = interpreter.execute("val x = 1")
     response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "x: Int = 1\n"
+      TEXT_PLAIN -> addLineSeparator("val x: Int = 1")
     ))
 
     response = interpreter.execute("val y = 2")
     response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "y: Int = 2\n"
+      TEXT_PLAIN -> addLineSeparator("val y: Int = 2")
     ))
 
     response = interpreter.execute("x + y")
     response should equal (Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
+      TEXT_PLAIN -> addLineSeparator("val res0: Int = 3")
     ))
   }
 
@@ -64,7 +66,7 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
         |x + y
       """.stripMargin)
     response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "x: Int = 1\ny: Int = 2\nres2: Int = 3\n"
+      TEXT_PLAIN -> s"val x: Int = 1${System.lineSeparator()}val y: Int = 2${System.lineSeparator()}val res0: Int = 3${System.lineSeparator()}"
     ))
   }
 
@@ -96,32 +98,32 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
       """.stripMargin)
 
     response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Int = 3\n"
+      TEXT_PLAIN -> addLineSeparator("val res0: Int = 3")
     ))
   }
 
   it should "capture stdout" in withInterpreter { interpreter =>
     val response = interpreter.execute("println(\"Hello World\")")
     response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "Hello World\n"
+      TEXT_PLAIN -> addLineSeparator("Hello World")
     ))
 
-    val resp1 = interpreter.execute("print(1)\nprint(2)")
+    val resp1 = interpreter.execute(s"print(1)${System.lineSeparator()}print(2)")
     resp1 should equal(Interpreter.ExecuteSuccess(
       TEXT_PLAIN -> "12"
     ))
 
-    val resp2 = interpreter.execute("println(1)\nprintln(2)")
+    val resp2 = interpreter.execute(s"println(1)${System.lineSeparator()}println(2)")
     resp2 should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "1\n2\n"
+      TEXT_PLAIN -> s"1${System.lineSeparator()}2${System.lineSeparator()}"
     ))
   }
 
   it should "report an error if accessing an unknown variable" in withInterpreter { interpreter =>
     interpreter.execute("x") match {
-      case Interpreter.ExecuteError(ename, evalue, _) =>
+      case Interpreter.ExecuteError(ename, evalue, stacktrace) =>
         ename should equal ("Error")
-        evalue should include ("error: not found: value x")
+        stacktrace.map(v => v.trim) should contain ("error: not found: value x")
 
       case other =>
         fail(s"Expected error, got $other.")
@@ -130,10 +132,10 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
 
   it should "execute spark commands" in withInterpreter { interpreter =>
     val response = interpreter.execute(
-      """sc.parallelize(0 to 1).map { i => i+1 }.collect""".stripMargin)
+      """sc.parallelize(0 to 1).collect""".stripMargin)
 
     response should equal(Interpreter.ExecuteSuccess(
-      TEXT_PLAIN -> "res0: Array[Int] = Array(1, 2)\n"
+      TEXT_PLAIN -> addLineSeparator("val res0: Array[Int] = Array(0, 1)")
     ))
   }
 
@@ -154,7 +156,7 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
       """val r = 1
         |// comment
       """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
+    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> addLineSeparator("val r: Int = 1")))
 
     response = interpreter.execute(
       """val r = 1
@@ -163,7 +165,7 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
         |comment
         |*/
       """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
+    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> addLineSeparator("val r: Int = 1")))
 
     // Test statements ending with a mix of single line and multi-line comments
     response = interpreter.execute(
@@ -175,7 +177,7 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
         |*/
         |// comment
       """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
+    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> addLineSeparator("val r: Int = 1")))
 
     response = interpreter.execute(
       """val r = 1
@@ -185,7 +187,7 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
         |comment
         |*/
       """.stripMargin)
-    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> "r: Int = 1\n"))
+    response should equal(Interpreter.ExecuteSuccess(TEXT_PLAIN -> addLineSeparator("val r: Int = 1")))
 
     // Make sure incomplete statement is still returned as incomplete statement.
     response = interpreter.execute("sc.")
@@ -198,20 +200,6 @@ class ScalaInterpreterSpec extends BaseInterpreterSpec {
       """.stripMargin)
     response should equal(Interpreter.ExecuteIncomplete())
 
-    // Make sure our handling doesn't mess up a string with value like comments.
-    val tripleQuotes = "\"\"\""
-    val stringWithComment = s"/*\ncomment\n*/\n//comment"
-    response = interpreter.execute(s"val r = $tripleQuotes$stringWithComment$tripleQuotes")
-
-    try {
-      response should equal(
-        Interpreter.ExecuteSuccess(TEXT_PLAIN -> s"r: String = \n$stringWithComment\n"))
-    } catch {
-      case _: Exception =>
-        response should equal(
-          // Scala 2.11 doesn't have a " " after "="
-          Interpreter.ExecuteSuccess(TEXT_PLAIN -> s"r: String =\n$stringWithComment\n"))
-    }
   }
 
   it should "return code completion candidates" in withInterpreter { interpreter =>

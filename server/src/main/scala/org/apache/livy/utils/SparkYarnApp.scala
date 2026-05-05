@@ -140,10 +140,12 @@ class SparkYarnApp private[utils] (
   private[utils] var state: SparkApp.State = SparkApp.State.STARTING
   private var yarnDiagnostics: IndexedSeq[String] = IndexedSeq.empty[String]
 
-  override def log(): IndexedSeq[String] =
+  override def log(): IndexedSeq[String] = {
+    IndexedSeq.empty ++
     ("stdout: " +: process.map(_.inputLines).getOrElse(ArrayBuffer.empty[String])) ++
     ("\nstderr: " +: process.map(_.errorLines).getOrElse(ArrayBuffer.empty[String])) ++
     ("\nYARN Diagnostics: " +: yarnDiagnostics)
+  }
 
   override def kill(): Unit = synchronized {
     killed = true
@@ -345,11 +347,11 @@ class SparkYarnApp private[utils] (
       debug(s"$appId $state ${yarnDiagnostics.mkString(" ")}")
     } catch {
       case _: InterruptedException =>
-        yarnDiagnostics = ArrayBuffer("Session stopped by user.")
+        yarnDiagnostics = ArrayBuffer("Session stopped by user.").toIndexedSeq
         changeState(SparkApp.State.KILLED)
       case NonFatal(e) =>
         error(s"Error whiling refreshing YARN state", e)
-        yarnDiagnostics = ArrayBuffer(e.getMessage)
+        yarnDiagnostics = ArrayBuffer(e.getMessage).toIndexedSeq
         changeState(SparkApp.State.FAILED)
     }
   }

@@ -27,9 +27,9 @@ from requests_kerberos import HTTPKerberosAuth, REQUIRED, OPTIONAL
 import cloudpickle
 import pytest
 try:
-    import httplib
+    import http.client as httplib
 except ImportError:
-    from http import HTTPStatus as httplib
+    import httplib
 from flaky import flaky
 
 global session_id, job_id

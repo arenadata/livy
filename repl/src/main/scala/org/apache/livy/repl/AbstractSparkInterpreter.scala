@@ -32,8 +32,9 @@ import org.apache.livy.Logging
 import org.apache.livy.rsc.driver.SparkEntries
 
 object AbstractSparkInterpreter {
-  private[repl] val KEEP_NEWLINE_REGEX = """(?<=\n)""".r
+  private[repl] val KEEP_NEWLINE_REGEX = s"""(?<=${System.lineSeparator()})""".r
   private val MAGIC_REGEX = "^%(\\w+)\\W*(.*)".r
+  private val COMMENTS_REGEX = "(?s)/\\*.*?\\*/".r
 }
 
 abstract class AbstractSparkInterpreter extends Interpreter with Logging {
@@ -62,6 +63,24 @@ abstract class AbstractSparkInterpreter extends Interpreter with Logging {
   protected def conf: SparkConf
 
   protected def addJar(jar: String): Unit
+
+  private def removeSingleLineComments(input: String): String = {
+    val lines = input.split(System.lineSeparator())
+    val noSingleLineComments =
+      lines.filterNot(_.trim.startsWith("//")).mkString(System.lineSeparator())
+    noSingleLineComments
+  }
+
+  private def removeMultiLineComments(input: String): String = {
+    val noMultiLineComments = COMMENTS_REGEX.replaceAllIn(input, "")
+    noMultiLineComments
+  }
+
+  private def removeComments(input: String): String = {
+    val noMultiLineComments = removeMultiLineComments(input)
+    val noComments = removeSingleLineComments(noMultiLineComments)
+    noComments
+  }
 
   protected def postStart(): Unit = {
     entries = new SparkEntries(conf)
@@ -108,10 +127,10 @@ abstract class AbstractSparkInterpreter extends Interpreter with Logging {
   override protected[repl] def execute(code: String): Interpreter.ExecuteResponse =
     restoreContextClassLoader {
       require(isStarted())
-
-      executeLines(code.trim.split("\n").toList, Interpreter.ExecuteSuccess(JObject(
-        (TEXT_PLAIN, JString(""))
-      )))
+      val codeWithoutComments = removeComments(code)
+      executeLines(
+        codeWithoutComments.trim.split(s"${System.lineSeparator()}").toList,
+        Interpreter.ExecuteSuccess(JObject((TEXT_PLAIN, JString("")))))
   }
 
   override protected[repl] def complete(code: String, cursor: Int): Array[String] = {
@@ -252,14 +271,15 @@ abstract class AbstractSparkInterpreter extends Interpreter with Logging {
                 // To distinguish them, reissue the same statement wrapped in { }.
                 // If it is an actual incomplete statement, the interpreter will return an error.
                 // If it is some comment, the interpreter will return success.
-                executeLine(s"{\n$head\n}") match {
+                executeLine(s"{${System.lineSeparator()}$head${System.lineSeparator()}}") match {
                   case Interpreter.ExecuteIncomplete() | Interpreter.ExecuteError(_, _, _) =>
                     // Return the original error so users won't get confusing error message.
                     result
                   case _ => resultFromLastLine
                 }
               case next :: nextTail =>
-                executeLines(head + "\n" + next :: nextTail, resultFromLastLine)
+                executeLines(head + s"${System.lineSeparator()}" + next :: nextTail,
+                  resultFromLastLine)
             }
           case Interpreter.ExecuteError(_, _, _) =>
             result
@@ -300,7 +320,7 @@ abstract class AbstractSparkInterpreter extends Interpreter with Logging {
     code match {
       case MAGIC_REGEX(magic, rest) =>
         executeMagic(magic, rest)
-      case _ =>
+      case _ if code.nonEmpty =>
         scala.Console.withOut(outputStream) {
           interpret(code) match {
             case Results.Success =>
@@ -313,6 +333,9 @@ abstract class AbstractSparkInterpreter extends Interpreter with Logging {
               Interpreter.ExecuteError("Error", ename, traceback)
           }
         }
+      case _ => Interpreter.ExecuteSuccess(
+        TEXT_PLAIN -> ""
+      )
     }
   }
 

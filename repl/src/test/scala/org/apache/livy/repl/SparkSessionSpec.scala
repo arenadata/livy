@@ -39,7 +39,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "res0: Int = 3\n"
+        "text/plain" -> ("val res0: Int = 3" + delimiter)
       )
     ))
 
@@ -56,7 +56,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "x: Int = 1\n"
+        "text/plain" -> ("val x: Int = 1" + delimiter)
       )
     ))
 
@@ -70,7 +70,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 1,
       "data" -> Map(
-        "text/plain" -> "y: Int = 2\n"
+        "text/plain" -> ("val y: Int = 2" + delimiter)
       )
     ))
 
@@ -84,7 +84,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 2,
       "data" -> Map(
-        "text/plain" -> "res0: Int = 3\n"
+        "text/plain" -> ("val res0: Int = 3" + delimiter)
       )
     ))
 
@@ -100,7 +100,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "Hello World\n"
+        "text/plain" -> ("Hello World" + delimiter)
       )
     ))
 
@@ -118,7 +118,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
     extract("status") should equal ("error")
     extract("execution_count") should equal ("0")
     extract("ename") should equal ("Error")
-    extract("evalue") should include ("error: not found: value x")
+    (result \ "traceback").extract[List[String]].map(v => v.trim) should contain ("error: not found: value x")
   }
 
   it should "report an error if exception is thrown" in withSession { session =>
@@ -169,7 +169,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "res0: Array[Int] = Array(1, 2)\n"
+        "text/plain" -> ("val res0: Array[Int] = Array(1, 2)" + delimiter)
       )
     ))
 
@@ -177,7 +177,7 @@ class SparkSessionSpec extends BaseSessionSpec(Spark) {
   }
 
   it should "do table magic" in withSession { session =>
-    val statement = execute(session)("val x = List((1, \"a\"), (3, \"b\"))\n%table x")
+    val statement = execute(session)(s"val x = List((1, \"a\"), (3, \"b\"))${delimiter}%table x")
     statement.id should equal (0)
 
     val result = parse(statement.output)

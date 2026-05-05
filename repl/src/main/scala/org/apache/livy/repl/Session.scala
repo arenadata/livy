@@ -26,6 +26,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 import scala.util.control.NonFatal
 
 import org.apache.spark.{SparkConf, SparkContext}
@@ -137,7 +138,9 @@ class Session(
       entries
     }(interpreterExecutor)
 
-    future.onFailure { case _ => changeState(SessionState.Error()) }(interpreterExecutor)
+    future.onComplete {
+      case Success(_) =>
+      case Failure(_) => changeState(SessionState.Error()) }(interpreterExecutor)
     future
   }
 

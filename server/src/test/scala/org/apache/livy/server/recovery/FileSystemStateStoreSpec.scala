@@ -24,27 +24,23 @@ import org.apache.hadoop.fs._
 import org.apache.hadoop.fs.Options.{CreateOpts, Rename}
 import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.hdfs.DistributedFileSystem
-import org.hamcrest.Description
 import org.mockito.ArgumentMatcher
-import org.mockito.Matchers.{any, anyInt, argThat, eq => equal}
+import org.mockito.ArgumentMatchers.{any, anyInt, argThat, eq => meq}
 import org.mockito.Mockito.{atLeastOnce, spy, verify, when}
-import org.mockito.internal.matchers.Equals
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import org.scalatest.FunSpec
-import org.scalatest.Matchers._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar.mock
 
 import org.apache.livy.{LivyBaseUnitTestSuite, LivyConf}
 
-class FileSystemStateStoreSpec extends FunSpec with LivyBaseUnitTestSuite {
+class FileSystemStateStoreSpec extends AnyFunSpec with LivyBaseUnitTestSuite with Matchers {
   describe("FileSystemStateStore") {
     def pathEq(wantedPath: String): Path = argThat(new ArgumentMatcher[Path] {
-      private val matcher = new Equals(wantedPath)
+      override def matches(path: Path): Boolean = path != null && path.toString == wantedPath
 
-      override def matches(path: Any): Boolean = matcher.matches(path.toString)
-
-      override def describeTo(d: Description): Unit = { matcher.describeTo(d) }
+      override def toString: String = wantedPath
     })
 
     def makeConf(): LivyConf = {
@@ -109,8 +105,8 @@ class FileSystemStateStoreSpec extends FunSpec with LivyBaseUnitTestSuite {
       verify(outputStream, atLeastOnce).close()
 
 
-      verify(fileContext).rename(pathEq("/key.tmp"), pathEq("/key"), equal(Rename.OVERWRITE))
-      verify(fileContext).delete(pathEq("/.key.tmp.crc"), equal(false))
+      verify(fileContext).rename(pathEq("/key.tmp"), pathEq("/key"), meq(Rename.OVERWRITE))
+      verify(fileContext).delete(pathEq("/.key.tmp.crc"), meq(false))
     }
 
     it("get should read file") {
@@ -195,7 +191,7 @@ class FileSystemStateStoreSpec extends FunSpec with LivyBaseUnitTestSuite {
       val stateStore = new FileSystemStateStore(makeConf(), Some(fileContext))
       stateStore.remove("key")
 
-      verify(fileContext).delete(pathEq("/key"), equal(false))
+      verify(fileContext).delete(pathEq("/key"), meq(false))
     }
 
     it("set safe mode ON and wait") {

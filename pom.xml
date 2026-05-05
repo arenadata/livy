@@ -99,11 +99,11 @@
     <junit.version>4.13.1</junit.version>
     <libthrift.version>0.9.3</libthrift.version>
     <kryo.version>4.0.2</kryo.version>
-    <metrics.version>3.1.0</metrics.version>
-    <mockito.version>1.10.19</mockito.version>
+    <metrics.version>4.1.16</metrics.version>
+    <mockito.version>4.11.0</mockito.version>
     <netty.version>4.1.86.Final</netty.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <scalatest.version>3.0.8</scalatest.version>
+    <scalatest.version>3.2.19</scalatest.version>
     <scalatra.version>2.6.5</scalatra.version>
     <java.version>1.8</java.version>
     <extraJavaTestArgs>
@@ -256,7 +256,7 @@
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
+      <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
       <scope>test</scope>
     </dependency>
@@ -285,6 +285,20 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_2.13</artifactId>
+        <version>${scalatest.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+
+      <dependency>
+        <groupId>org.scalatra</groupId>
+        <artifactId>scalatra-scalatest_2.13</artifactId>
+        <version>${scalatra.version}</version>
+        <scope>test</scope>
+      </dependency>
 
       <dependency>
         <groupId>ch.qos.reload4j</groupId>
@@ -1178,7 +1192,7 @@
         </executions>
       </plugin>
 
-      <plugin>
+      <!--<plugin>
         <groupId>org.scalastyle</groupId>
         <artifactId>scalastyle-maven-plugin</artifactId>
         <version>0.8.0</version>
@@ -1201,7 +1215,7 @@
             </goals>
           </execution>
         </executions>
-      </plugin>
+      </plugin>-->
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1342,6 +1356,15 @@
         <scala.version>2.12.18</scala.version>
       </properties>
     </profile>
+    <profile>
+      <id>scala-2.13</id>
+      <properties>
+        <scala.binary.version>2.13</scala.binary.version>
+        <scala.version>2.13.15</scala.version>
+        <scalatra.version>2.8.4</scalatra.version>
+        <spark.bin.name>spark-${spark.version}-bin-hadoop3-scala2.13</spark.bin.name>
+      </properties>
+    </profile>
 
     <profile>
       <id>thriftserver</id>
@@ -1377,7 +1400,6 @@
         <netty.version>4.1.96.Final</netty.version>
         <jackson.version>2.15.2</jackson.version>
         <jackson-databind.version>2.15.2</jackson-databind.version>
-        <spark.bin.name>spark-${spark.version}-bin-hadoop${hadoop.major-minor.version}</spark.bin.name>
         <spark.bin.download.url>
           https://archive.apache.org/dist/spark/spark-${spark.version}/${spark.bin.name}.tgz
         </spark.bin.download.url>

@@ -278,7 +278,7 @@ class SparkKubernetesApp private[utils] (
         "Please check Livy log and KUBERNETES log to know the details."
 
       error(s"Failed monitoring the app $appTag: $msg")
-      kubernetesDiagnostics = ArrayBuffer(msg)
+      kubernetesDiagnostics = ArrayBuffer(msg).toIndexedSeq
       failToMonitor()
     }
   }
@@ -360,12 +360,12 @@ class SparkKubernetesApp private[utils] (
         kubernetesAppMonitorFailedTimes += 1
         if (kubernetesAppMonitorFailedTimes > appLookupMaxFailedTimes) {
           error(s"Monitoring of the app $appTag was interrupted.", e)
-          kubernetesDiagnostics = ArrayBuffer(e.getMessage)
+          kubernetesDiagnostics = ArrayBuffer(e.getMessage).toIndexedSeq
           failToMonitor()
         }
       case NonFatal(e) =>
         error(s"Error while refreshing Kubernetes state", e)
-        kubernetesDiagnostics = ArrayBuffer(e.getMessage)
+        kubernetesDiagnostics = ArrayBuffer(e.getMessage).toIndexedSeq
         changeState(SparkApp.State.FAILED)
     } finally {
       if (!isRunning) {
@@ -636,8 +636,8 @@ private[utils] case class KubernetesAppReport(driver: Option[Pod], executors: Se
 
   private def buildSparkPodDiagnosticsPrettyString(pod: Pod): String = {
     import scala.collection.JavaConverters._
-    def printMap(map: Map[_, _]): String = map.map {
-      case (key, value) => s"$key=$value"
+    def printMap(map: Map[_, _]): String = map.map { (kv: (Any, Any)) =>
+      s"${kv._1}=${kv._2}"
     }.mkString(", ")
 
     if (pod == null) return "unknown"
@@ -690,7 +690,7 @@ private[utils] object KubernetesExtensions {
         .withLabels(labels.asJava)
         .withLabel(appTagLabel)
         .withLabel(appIdLabel)
-        .list.getItems.asScala.map(new KubernetesApplication(_))
+        .list.getItems.asScala.map(new KubernetesApplication(_)).toSeq
     }
 
     def killApplication(app: KubernetesApplication): Boolean = {
@@ -708,7 +708,7 @@ private[utils] object KubernetesExtensions {
         .list.getItems.asScala
       val driver = pods.find(_.getMetadata.getLabels.get(SPARK_ROLE_LABEL) == SPARK_ROLE_DRIVER)
       val executors =
-        pods.filter(_.getMetadata.getLabels.get(SPARK_ROLE_LABEL) == SPARK_ROLE_EXECUTOR)
+        pods.filter(_.getMetadata.getLabels.get(SPARK_ROLE_LABEL) == SPARK_ROLE_EXECUTOR).toSeq
       val appLog = Try(
         client.pods.inNamespace(app.getApplicationNamespace)
           .withName(app.getApplicationPod.getMetadata.getName)

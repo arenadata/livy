@@ -48,7 +48,7 @@ class SharedSessionSpec extends BaseSessionSpec(Shared) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "res0: Int = 3\n"
+        "text/plain" -> ("val res0: Int = 3" + delimiter)
       )
     ))
 
@@ -82,7 +82,7 @@ class SharedSessionSpec extends BaseSessionSpec(Shared) {
       "status" -> "ok",
       "execution_count" -> 0,
       "data" -> Map(
-        "text/plain" -> "res0: Array[Int] = Array(1, 2)\n"
+        "text/plain" -> ("val res0: Array[Int] = Array(1, 2)" + delimiter)
       )
     ))
 

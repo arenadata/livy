@@ -26,10 +26,12 @@ import scala.language.postfixOps
 import org.apache.spark.launcher.SparkLauncher
 import org.json4s.{DefaultFormats, Extraction, JValue}
 import org.json4s.jackson.JsonMethods.parse
-import org.mockito.{Matchers => MockitoMatchers}
-import org.mockito.Matchers._
+import org.mockito.{ArgumentMatchers => MockitoMatchers}
+import org.mockito.ArgumentMatchers._
 import org.mockito.Mockito.{atLeastOnce, verify, when}
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually._
 import org.scalatestplus.mockito.MockitoSugar.mock
 
@@ -41,7 +43,7 @@ import org.apache.livy.server.recovery.SessionStore
 import org.apache.livy.sessions.{PySpark, SessionState, Spark}
 import org.apache.livy.utils.{AppInfo, SparkApp}
 
-class InteractiveSessionSpec extends FunSpec
+class InteractiveSessionSpec extends AnyFunSpec
     with Matchers with BeforeAndAfterAll with LivyBaseUnitTestSuite {
 
   private val livyConf = new LivyConf()
@@ -171,7 +173,7 @@ class InteractiveSessionSpec extends FunSpec
       session.appInfo shouldEqual expectedAppInfo
 
       verify(sessionStore, atLeastOnce()).save(
-        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), anyObject())
+        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), any())
 
       session.state should (be(SessionState.Starting) or be(SessionState.Idle))
     }
@@ -189,43 +191,38 @@ class InteractiveSessionSpec extends FunSpec
       assert(properties(RSCConf.Entry.RPC_CHANNEL_LOG_LEVEL.key()) === "TRACE")
     }
 
-    withSession("should execute `1 + 2` == 3") { session =>
+    withSession("should execute `1 + 2` == 3") { _ =>
       val pyResult = executeStatement("1 + 2", Some("pyspark"))
-      pyResult should equal (Extraction.decompose(Map(
+      pyResult should equal(Extraction.decompose(Map(
         "status" -> "ok",
         "execution_count" -> 0,
-        "data" -> Map("text/plain" -> "3")))
-      )
+        "data" -> Map("text/plain" -> "3")
+      )))
 
       val scalaResult = executeStatement("1 + 2", Some("spark"))
-      scalaResult should equal (Extraction.decompose(Map(
-        "status" -> "ok",
-        "execution_count" -> 1,
-        "data" -> Map("text/plain" -> "res0: Int = 3\n")))
-      )
+      (scalaResult \ "status").extract[String] shouldBe "ok"
+      (scalaResult \ "execution_count").extract[Int] shouldBe 1
+      val scalaText = (scalaResult \ "data" \ "text/plain").extract[String]
+      scalaText.replaceFirst("^val\\s+", "") shouldBe "res0: Int = 3\n"
 
       val rResult = executeStatement("1 + 2", Some("sparkr"))
-      rResult should equal (Extraction.decompose(Map(
+      rResult should equal(Extraction.decompose(Map(
         "status" -> "ok",
         "execution_count" -> 2,
-        "data" -> Map("text/plain" -> "[1] 3")))
-      )
+        "data" -> Map("text/plain" -> "[1] 3")
+      )))
     }
 
     withSession("should report an error if accessing an unknown variable") { session =>
       val result = executeStatement("x")
-      val expectedResult = Extraction.decompose(Map(
-        "status" -> "error",
-        "execution_count" -> 3,
-        "ename" -> "NameError",
-        "evalue" -> "name 'x' is not defined",
-        "traceback" -> List(
-          "Traceback (most recent call last):\n",
-          "NameError: name 'x' is not defined\n"
-        )
-      ))
+      (result \ "status").extract[String] shouldBe "error"
+      (result \ "ename").extract[String] shouldBe "NameError"
+      (result \ "evalue").extract[String] should include ("name 'x' is not defined")
 
-      result should equal (expectedResult)
+      val tb = (result \ "traceback").extract[List[String]].mkString
+      tb should include ("Traceback (most recent call last):")
+      tb should include ("NameError: name 'x' is not defined")
+
       eventually(timeout(10 seconds), interval(30 millis)) {
         session.state shouldBe (SessionState.Idle)
       }
@@ -287,7 +284,7 @@ class InteractiveSessionSpec extends FunSpec
 
       s.appIdKnown("appId")
       verify(sessionStore, atLeastOnce()).save(
-        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), anyObject())
+        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), any())
     }
 
     it("should recover sessions with no name") {
@@ -306,7 +303,7 @@ class InteractiveSessionSpec extends FunSpec
 
       s.appIdKnown("appId")
       verify(sessionStore, atLeastOnce()).save(
-        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), anyObject())
+        MockitoMatchers.eq(InteractiveSession.RECOVERY_SESSION_TYPE), any())
     }
 
     it("should recover session to dead state if rscDriverUri is unknown") {

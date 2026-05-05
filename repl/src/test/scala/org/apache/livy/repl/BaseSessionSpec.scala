@@ -26,7 +26,8 @@ import scala.language.postfixOps
 
 import org.apache.spark.SparkConf
 import org.json4s._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.Eventually._
 
 import org.apache.livy.LivyBaseUnitTestSuite
@@ -35,13 +36,17 @@ import org.apache.livy.rsc.driver.{Statement, StatementState}
 import org.apache.livy.sessions._
 
 abstract class BaseSessionSpec(kind: Kind)
-    extends FlatSpec with Matchers with LivyBaseUnitTestSuite {
+    extends AnyFlatSpec with Matchers with LivyBaseUnitTestSuite {
 
   implicit val formats = DefaultFormats
+
+  protected val delimiter: String = System.lineSeparator()
 
   private val rscConf = new RSCConf(new Properties()).set(RSCConf.Entry.SESSION_KIND, kind.toString)
 
   private val sparkConf = new SparkConf()
+    .setMaster("local[*]")
+    .setAppName("test")
 
   protected def execute(session: Session)(code: String): Statement = {
     val id = session.execute(code)

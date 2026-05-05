@@ -135,7 +135,7 @@ class JobApiIT extends BaseIntegrationTestSuite with BeforeAndAfterAll with Logg
     assert(result === 100)
   }
 
-  ignore("run spark sql job") {
+  test("run spark sql job") {
     assume(client != null, "Client not active.")
     val result = waitFor(client.submit(new SQLGetTweets(false)))
     assert(result.size() > 0)
@@ -255,29 +255,57 @@ class JobApiIT extends BaseIntegrationTestSuite with BeforeAndAfterAll with Logg
     val testDir = Files.createTempDirectory(tmpDir.toPath(), "python-tests-").toFile()
     val testFile = createPyTestsForPythonAPI(testDir)
 
-    val builder = new ProcessBuilder(Seq("python", testFile.getAbsolutePath()).asJava)
-    builder.directory(testDir)
+    def start(cmd: String): Process = {
+      val pb = new ProcessBuilder(Seq(cmd, testFile.getAbsolutePath).asJava)
+      pb.directory(testDir)
 
-    val env = builder.environment()
-    env.put("LIVY_END_POINT", livyEndpoint)
-    env.put("ADD_FILE_URL", addFilePath)
-    env.put("ADD_PYFILE_URL", addPyFilePath)
-    env.put("UPLOAD_FILE_URL", uploadFilePath)
-    env.put("UPLOAD_PYFILE_URL", uploadPyFilePath)
+      val env = pb.environment()
+      env.put("LIVY_END_POINT", livyEndpoint)
+      env.put("ADD_FILE_URL", addFilePath)
+      env.put("ADD_PYFILE_URL", addPyFilePath)
+      env.put("UPLOAD_FILE_URL", uploadFilePath)
+      env.put("UPLOAD_PYFILE_URL", uploadPyFilePath)
+      env.put("PYTHONIOENCODING", "utf-8")
+      env.put("no_proxy", "*")
+      env.put("NO_PROXY", "*")
+      env.remove("http_proxy")
+      env.remove("https_proxy")
+      env.remove("HTTP_PROXY")
+      env.remove("HTTPS_PROXY")
+      env.remove("all_proxy")
+      env.remove("ALL_PROXY")
 
-    if (authScheme != null && !authScheme.isEmpty()) { env.put("AUTH_SCHEME", authScheme) }
-    if (user != null && !user.isEmpty()) { env.put("USER", user) }
-    if (password != null && !password.isEmpty()) { env.put("PASSWORD", password) }
-    if (sslCertPath != null && !sslCertPath.isEmpty()) { env.put("SSL_CERT", sslCertPath) }
+      if (authScheme != null && !authScheme.isEmpty) { env.put("AUTH_SCHEME", authScheme) }
+      if (user != null && !user.isEmpty) { env.put("USER", user) }
+      if (password != null && !password.isEmpty) { env.put("PASSWORD", password) }
+      if (sslCertPath != null && !sslCertPath.isEmpty) { env.put("SSL_CERT", sslCertPath) }
 
-    builder.redirectErrorStream(true)
-    builder.redirectOutput(new File(tmpDir, "pytest_results.log"))
+      pb.redirectErrorStream(true)
+      pb.redirectOutput(new File(tmpDir, "pytest_results.log"))
+      pb.start()
+    }
 
-    val process = builder.start()
+    val process =
+      try start("python3")
+      catch { case _: Throwable => start("python") }
 
-    process.waitFor()
+    val finished = process.waitFor(180, TimeUnit.SECONDS)
+    if (!finished) {
+      process.destroyForcibly()
+      val log = Try(new String(Files.readAllBytes(
+        new File(tmpDir, "pytest_results.log").toPath), UTF_8)).getOrElse("<no log>")
+      fail(s"Python API tests timed out\n\n==== pytest_results.log ====\n$log\n==== end ====")
+    }
 
-    assert(process.exitValue() === 0)
+    val exit = process.exitValue()
+    if (exit != 0) {
+      val log = Try(new String(Files.readAllBytes(
+        new File(tmpDir, "pytest_results.log").toPath), UTF_8)).getOrElse("<no log>")
+      fail(s"Python API tests failed with exit code " +
+        s"$exit\n\n==== pytest_results.log ====\n$log\n==== end ====")
+    }
+
+    assert(exit === 0)
   }
 
   private def createPyTestsForPythonAPI(testDir: File): File = {
