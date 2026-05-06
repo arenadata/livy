@@ -28,7 +28,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 
 import org.apache.commons.codec.binary.Base64
-import org.apache.commons.lang.StringEscapeUtils
+import org.apache.commons.lang3.StringEscapeUtils
 import org.apache.spark.SparkConf
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.SQLContext

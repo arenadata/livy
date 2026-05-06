@@ -85,23 +85,23 @@
     <spark.scala-2.11.version>2.4.5</spark.scala-2.11.version>
     <spark.scala-2.12.version>2.4.5</spark.scala-2.12.version>
     <spark.version>${spark.scala-2.11.version}</spark.version>
-    <kubernetes.client.version>5.6.0</kubernetes.client.version>
-    <hive.version>3.0.0</hive.version>
+    <kubernetes.client.version>6.13.5</kubernetes.client.version>
+    <hive.version>4.3.0.1-4.3.0-0</hive.version>
     <commons-codec.version>1.15</commons-codec.version>
-    <commons-lang3.version>3.17.0</commons-lang3.version>
+    <commons-lang3.version>3.18.0</commons-lang3.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpcore.version>4.4.16</httpcore.version>
-    <jackson.version>2.12.7</jackson.version>
-    <jackson-databind.version>2.12.7.1</jackson-databind.version>
+    <jackson.version>2.18.6</jackson.version>
+    <jackson-databind.version>2.18.6</jackson-databind.version>
     <jacoco.version>0.8.13</jacoco.version>
     <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
-    <jetty.version>9.4.56.v20240826</jetty.version>
+    <jetty.version>9.4.58.v20250814</jetty.version>
     <junit.version>4.13.1</junit.version>
     <libthrift.version>0.9.3</libthrift.version>
     <kryo.version>4.0.2</kryo.version>
     <metrics.version>4.1.16</metrics.version>
     <mockito.version>4.11.0</mockito.version>
-    <netty.version>4.1.86.Final</netty.version>
+    <netty.version>4.1.131.Final</netty.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <scalatest.version>3.2.19</scalatest.version>
     <scalatra.version>2.6.5</scalatra.version>
@@ -156,8 +156,8 @@
     <apacheds.version>2.0.0.AM26</apacheds.version>
     <ldap-api.version>2.1.2</ldap-api.version>
 
-    <curator.version>2.7.1</curator.version>
-    <zookeeper.version>3.4.6</zookeeper.version>
+    <curator.version>5.9.0.1-4.3.0-0</curator.version>
+    <zookeeper.version>3.9.5.1-4.3.0-0</zookeeper.version>
 
     <!--
       Properties for the copyright header style checks. Modules that use the ASF header
@@ -337,6 +337,12 @@
       </dependency>
 
       <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
         <version>${commons-codec.version}</version>
@@ -369,7 +375,18 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>*</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-httpclient-okhttp</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>kubernetes-httpclient-jdk</artifactId>
+        <version>${kubernetes.client.version}</version>
+        <scope>runtime</scope>
       </dependency>
 
       <dependency>
@@ -788,6 +805,24 @@
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-security</artifactId>
         <version>${jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-xml</artifactId>
+        <version>${jetty.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-jdk18on</artifactId>
+        <version>1.84</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.yaml</groupId>
+        <artifactId>snakeyaml</artifactId>
+        <version>2.2</version>
       </dependency>
 
       <dependency>
@@ -1362,7 +1397,6 @@
         <scala.binary.version>2.13</scala.binary.version>
         <scala.version>2.13.15</scala.version>
         <scalatra.version>2.8.4</scalatra.version>
-        <spark.bin.name>spark-${spark.version}-bin-hadoop3-scala2.13</spark.bin.name>
       </properties>
     </profile>
 
@@ -1391,17 +1425,18 @@
     <profile>
       <id>spark3</id>
       <properties>
-        <spark.version>3.5.6</spark.version>
+        <spark.version>3.5.4.4-4.3.0-0</spark.version>
         <hadoop.major-minor.version>3</hadoop.major-minor.version>
-        <hadoop.version>3.3.4</hadoop.version>
-        <java.version>1.8</java.version>
+        <hadoop.version>3.4.3.1-4.3.0-0</hadoop.version>
+        <java.version>17</java.version>
         <py4j.version>0.10.9.7</py4j.version>
         <json4s.version>3.7.0-M11</json4s.version>
-        <netty.version>4.1.96.Final</netty.version>
-        <jackson.version>2.15.2</jackson.version>
-        <jackson-databind.version>2.15.2</jackson-databind.version>
+        <netty.version>4.1.131.Final</netty.version>
+        <jackson.version>2.18.6</jackson.version>
+        <jackson-databind.version>2.18.6</jackson-databind.version>
+        <spark.bin.name>spark-${spark.version}-bin-${hadoop.version}</spark.bin.name>
         <spark.bin.download.url>
-          https://archive.apache.org/dist/spark/spark-${spark.version}/${spark.bin.name}.tgz
+          https://github.com/arenadata/spark/releases/download/v${spark.version}/${spark.bin.name}.tgz
         </spark.bin.download.url>
         <skipPySpark2Tests>true</skipPySpark2Tests>
       </properties>

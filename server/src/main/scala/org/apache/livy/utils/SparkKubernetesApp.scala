@@ -30,7 +30,7 @@ import scala.util.control.NonFatal
 
 import io.fabric8.kubernetes.api.model._
 import io.fabric8.kubernetes.api.model.networking.v1.{Ingress, IngressBuilder}
-import io.fabric8.kubernetes.client.{Config, ConfigBuilder, _}
+import io.fabric8.kubernetes.client.{Config, ConfigBuilder, KubernetesClientBuilder, _}
 import org.apache.commons.lang3.StringUtils
 
 import org.apache.livy.{LivyConf, Logging}
@@ -93,7 +93,7 @@ object SparkKubernetesApp extends Logging {
         info(s"Refresh a new token ${newAccessToken}")
 
         config.setOauthToken(newAccessToken)
-        kubernetesClient = new DefaultKubernetesClient(config)
+        kubernetesClient = new KubernetesClientBuilder().withConfig(config).build()
 
         // Token will expire 1 hour default, community recommend to update every 5 minutes
         Thread.sleep(300000)
@@ -137,7 +137,7 @@ object SparkKubernetesApp extends Logging {
   private var sessionLeakageCheckTimeout: Long = _
   private var sessionLeakageCheckInterval: Long = _
 
-  var kubernetesClient: DefaultKubernetesClient = _
+  var kubernetesClient: KubernetesClient = _
 
   private var appLookupThreadPoolSize: Long = _
   private var appLookupMaxFailedTimes: Long = _
@@ -831,7 +831,7 @@ private[utils] object KubernetesClientFactory {
     def toOption: Option[String] = if (string == null || string.isEmpty) None else Option(string)
   }
 
-  def createKubernetesClient(livyConf: LivyConf): DefaultKubernetesClient = {
+  def createKubernetesClient(livyConf: LivyConf): KubernetesClient = {
     val masterUrl = sparkMasterToKubernetesApi(livyConf.sparkMaster())
 
     val oauthTokenFile = livyConf.get(LivyConf.KUBERNETES_OAUTH_TOKEN_FILE).toOption
@@ -865,7 +865,7 @@ private[utils] object KubernetesClientFactory {
         (file, configBuilder) => configBuilder.withClientCertFile(file)
       }
       .build()
-    new DefaultKubernetesClient(config)
+    new KubernetesClientBuilder().withConfig(config).build()
   }
 
   def sparkMasterToKubernetesApi(sparkMaster: String): String = {
