@@ -15,101 +15,75 @@
 # limitations under the License.
 #
 
-FROM ubuntu:noble
+FROM ubuntu:jammy
 
-# configure locale
-RUN apt-get update -qq > /dev/null && apt-get install -qq --yes --no-install-recommends \
-    locales && \
-    locale-gen en_US.UTF-8
-ENV LANG="en_US.UTF-8" \
-    LANGUAGE="en_US.UTF-8" \
-    LC_ALL="en_US.UTF-8" \
-    TZ=US \
-    DEBIAN_FRONTEND=noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 
-# Install necessary dependencies for build/test/debug
-# Use `lsof -i -P -n` to find open ports
-RUN apt-get install -qq \
-    apt-transport-https \
+RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+ && apt-get update -qq \
+ && apt-get install -qq --yes --no-install-recommends tzdata \
+ && dpkg-reconfigure -f noninteractive tzdata \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update -qq \
+ && apt-get install -qq --yes --no-install-recommends locales \
+ && locale-gen en_US.UTF-8
+ENV LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
+
+RUN apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
+    ca-certificates \
     curl \
     git \
-    libkrb5-dev \
-    openjdk-8-jdk-headless \
-    openjdk-17-jdk-headless \
-    r-base \
+    gnupg \
+    lsof \
     maven \
+    openjdk-17-jdk \
+    python3-dev \
+    python3-pip \
+    python-is-python3 \
+    libkrb5-dev \
     software-properties-common \
+    telnet \
     vim \
     wget \
-    telnet \
-    lsof
+ && rm -rf /var/lib/apt/lists/*
 
-# This fixes integration tests
-# If setsid is available, signals are sent to containers in MiniYarnCluster using negative pids, however
-# in the Docker container this results in a kill(0) system call which triggers an ExitCodeException in
-# the kill function that breaks test execution. If setsid is removed, pids < 0 are not used.
-# See https://github.com/apache/hadoop/blob/rel/release-2.7.3/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/util/Shell.java#L238
-RUN rm /usr/bin/setsid
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+RUN update-alternatives --set java  ${JAVA_HOME}/bin/java  && \
+    update-alternatives --set javac ${JAVA_HOME}/bin/javac
 
-# python build
-RUN apt-get install -y \
-  build-essential \
-  libbz2-dev \
-  libffi-dev \
-  liblzma-dev \
-  libncurses-dev \
-  libreadline-dev \
-  libsqlite3-dev \
-  libssl-dev \
-  zlib1g-dev
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
+      ca-certificates gnupg curl \
+ && mkdir -p /etc/apt/keyrings \
+ && curl -fsSL https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc \
+    | gpg --dearmor -o /etc/apt/keyrings/cran.gpg \
+ && echo "deb [signed-by=/etc/apt/keyrings/cran.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" \
+    > /etc/apt/sources.list.d/cran-r.list \
+ && apt-get update -qq \
+ && apt-get install -qq --yes --no-install-recommends r-base \
+ && rm -rf /var/lib/apt/lists/*
 
-ENV HOME=/root
+RUN apt-get update -qq && apt-get install -qq --yes --no-install-recommends \
+    build-essential \
+    gcc \
+    pkg-config \
+    libkrb5-dev \
+    python3-dev \
+    python3-pip \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/pyenv/pyenv.git $HOME/pyenv
-
-ENV PYENV_ROOT=$HOME/pyenv
-ENV PATH="$HOME/pyenv/shims:$HOME/pyenv/bin:$HOME/bin:$PATH"
-
-RUN pyenv install -v 2.7.18 && \
-  pyenv install -v 3.9.21 && \
-  pyenv global 2.7.18 3.9.21 && \
-  pyenv rehash
-
-# Add build dependencies for python2
-# - First we upgrade pip because that makes a lot of things better
-# - Then we remove the provided version of setuptools and install a different version
-# - Then we install additional dependencies
-RUN python2 -m pip install -U "pip < 21.0" && \
-        apt-get remove -y python-setuptools && \
-        python2 -m pip install "setuptools < 36" && \
-        python2 -m pip install \
-        cloudpickle \
-        codecov \
-        flake8 \
-        flaky \
-        "future>=0.15.2" \
-        "futures>=3.0.5" \
-        pytest \
-        pytest-runner \
-        requests-kerberos \
-        "requests >= 2.10.0" \
-        "responses >= 0.5.1"
-
-# Now do the same for python3
-RUN python3 -m pip install -U pip && pip3 install \
-        cloudpickle \
-        codecov \
-        flake8 \
-        flaky \
-        pytest \
-        pytest-runner \
-        requests-kerberos \
-        requests \
-        responses
-
-RUN pyenv rehash
-
-RUN apt remove -y openjdk-11-jre-headless
+RUN python3 -m pip install -U pip \
+ && python3 -m pip install \
+      cloudpickle \
+      codecov \
+      flake8 \
+      flaky \
+      pytest \
+      pytest-runner \
+      requests>=2.10.0 \
+      responses>=0.5.1 \
+      requests-kerberos
 
 WORKDIR /workspace
 
