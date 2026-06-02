@@ -22,7 +22,7 @@
 
   <groupId>org.apache.livy</groupId>
   <artifactId>livy-main</artifactId>
-  <version>0.9.0.1-4.3.0-0</version>
+  <version>0.9.0.1-4.3.0-1</version>
   <packaging>pom</packaging>
   <name>Livy Project Parent POM</name>
   <description>Livy Project</description>
@@ -86,7 +86,7 @@
     <spark.scala-2.12.version>2.4.5</spark.scala-2.12.version>
     <spark.version>${spark.scala-2.11.version}</spark.version>
     <kubernetes.client.version>6.13.5</kubernetes.client.version>
-    <hive.version>4.3.0.1-4.3.0-0</hive.version>
+    <hive.version>4.3.0.1-4.3.0-2</hive.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-lang3.version>3.18.0</commons-lang3.version>
     <httpclient.version>4.5.14</httpclient.version>
@@ -1519,9 +1519,9 @@
     <profile>
       <id>spark3</id>
       <properties>
-        <spark.version>3.5.4.4-4.3.0-0</spark.version>
+        <spark.version>3.5.4.4-4.3.0-1</spark.version>
         <hadoop.major-minor.version>3</hadoop.major-minor.version>
-        <hadoop.version>3.4.3.1-4.3.0-0</hadoop.version>
+        <hadoop.version>3.4.3.1-4.3.0-1</hadoop.version>
         <java.version>17</java.version>
         <py4j.version>0.10.9.7</py4j.version>
         <json4s.version>3.7.0-M11</json4s.version>

@@ -17,7 +17,7 @@
 
 FROM livy-dev-spark:latest
 
-ARG LIVY_VERSION=0.9.0.1-4.3.0-0
+ARG LIVY_VERSION=0.9.0.1-4.3.0-1
 ARG ROOT_PATH=/opt
 
 RUN apt-get update \
@@ -35,6 +35,6 @@ RUN unzip ${LIVY_PACKAGE}.zip 1>/dev/null \
   && rm ${LIVY_PACKAGE}.zip
 
 # Uncomment following line or add more such lines to replace the default jars with private builds.
-# COPY livy-core_2.12-0.9.0.1-4.3.0-0.jar ${SPARK_HOME}/repl_2.12-jars/livy-core_2.12-0.9.0.1-4.3.0-0.jar
+# COPY livy-core_2.12-0.9.0.1-4.3.0-1.jar ${SPARK_HOME}/repl_2.12-jars/livy-core_2.12-0.9.0.1-4.3.0-1.jar
 
 WORKDIR ${LIVY_HOME}
