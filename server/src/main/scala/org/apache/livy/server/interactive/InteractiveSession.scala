@@ -475,7 +475,7 @@ class InteractiveSession(
 
   _appId = appIdHint
 
-  private var app: Option[SparkApp] = None
+  private[interactive] var app: Option[SparkApp] = None
 
   override def start(): Unit = {
     sessionStore.save(RECOVERY_SESSION_TYPE, recoveryMetadata)
@@ -483,11 +483,10 @@ class InteractiveSession(
     app = mockApp.orElse {
       val driverProcess = client.flatMap { c => Option(c.getDriverProcess) }
         .map(new LineBufferedProcess(_, livyConf.getInt(LivyConf.SPARK_LOGS_SIZE)))
-      if (!livyConf.isRunningOnKubernetes()) {
-        driverProcess.map(_ => SparkApp.create(appTag, appId, driverProcess, livyConf, Some(this)))
-      } else {
-        // Create SparkApp for Kubernetes anyway
+      if (livyConf.isRunningOnYarn() || livyConf.isRunningOnKubernetes() || driverProcess.isDefined) {
         Some(SparkApp.create(appTag, appId, driverProcess, livyConf, Some(this)))
+      } else {
+        None
       }
     }
 

@@ -318,5 +318,38 @@ class InteractiveSessionSpec extends AnyFunSpec
       s.state shouldBe a[SessionState.Dead]
       s.logLines().mkString should include("RSCDriver URI is unknown")
     }
+
+    it("should create a SparkApp to track a recovered YARN session without a driver process") {
+      val conf = new LivyConf().set(LivyConf.LIVY_SPARK_MASTER, "yarn")
+      val sessionStore = mock[SessionStore]
+      val mockClient = mock[RSCClient]
+      when(mockClient.submit(any(classOf[PingJob]))).thenReturn(mock[JobHandle[Void]])
+      val m = InteractiveRecoveryMetadata(
+          80, None, Some("appId"), "appTag", Spark, 0, null, None, None, None,
+          None, None, None, Map.empty[String, String], List.empty[String], List.empty[String],
+          List.empty[String], None, List.empty[String], None, None, Some(URI.create("")))
+      val s = InteractiveSession.recover(m, conf, sessionStore, None, Some(mockClient))
+      s.start()
+
+      s.app should not be empty
+    }
+
+    it("should reap a recovered session when its Spark application has finished") {
+      val conf = new LivyConf()
+      val sessionStore = mock[SessionStore]
+      val mockClient = mock[RSCClient]
+      when(mockClient.submit(any(classOf[PingJob]))).thenReturn(mock[JobHandle[Void]])
+      val m = InteractiveRecoveryMetadata(
+          81, None, Some("appId"), "appTag", Spark, 0, null, None, None, None,
+          None, None, None, Map.empty[String, String], List.empty[String], List.empty[String],
+          List.empty[String], None, List.empty[String], None, None, Some(URI.create("")))
+      val s = InteractiveSession.recover(m, conf, sessionStore, None, Some(mockClient))
+      s.start()
+      s.state shouldBe SessionState.Recovering
+
+      s.stateChanged(SparkApp.State.RUNNING, SparkApp.State.FINISHED)
+
+      s.state shouldBe a[SessionState.Dead]
+    }
   }
 }
